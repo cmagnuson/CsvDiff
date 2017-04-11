@@ -1,4 +1,4 @@
-module CsvDiff (diff, toIndexedCsv)
+module CsvDiff (diff, toIndexedCsv, Changeset)
 where
 
 import qualified Data.Map.Strict as Map
@@ -28,8 +28,8 @@ type Row = [String]
 type IndexedRecord = (RowIndex, Row)
 
 -- Original CSV, New CSV, unique identifier column index
-diff :: IndexedCsv -> IndexedCsv -> String
-diff csv1 csv2 = changesetToString (diffChangeset csv1 csv2)
+diff :: IndexedCsv -> IndexedCsv -> Changeset
+diff csv1 csv2 = diffChangeset csv1 csv2
 
 changesetToString :: Changeset -> String
 changesetToString = show
