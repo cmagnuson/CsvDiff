@@ -30,7 +30,6 @@ executable CsvDiff-exe
                      , CsvDiff
                      , csv
                      , parsec
-                     , pretty-show
   default-language:    Haskell2010
 
 test-suite CsvDiff-test

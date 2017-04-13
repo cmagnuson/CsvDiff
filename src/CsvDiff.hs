@@ -1,25 +1,25 @@
 module CsvDiff (diff, toIndexedCsv, Changeset, changesetToString)
 where
 
+import           Data.List
 import qualified Data.Map.Strict as Map
-import Safe
-import Data.List
-import Data.Maybe
-import Text.CSV
+import           Data.Maybe
+import           Safe
+import           Text.CSV
 
 data Changeset = Changeset
     {
-     adds :: [IndexedRecord],
-     deletes :: [IndexedRecord],
+     adds           :: [IndexedRecord],
+     deletes        :: [IndexedRecord],
      -- unique identifier, column name, old value, new value
-     modifications :: [(RowIndex, ColumnIndex, String, String)],
-     columnsAdded :: [String],
+     modifications  :: [(RowIndex, ColumnIndex, String, String)],
+     columnsAdded   :: [String],
      columnsDeleted :: [String]
     } deriving (Eq, Show)
 
 data IndexedCsv = IndexedCsv
   {
-    header :: [String],
+    header  :: [String],
     entries :: Map.Map String [String]
   } deriving (Eq, Show)
 
@@ -87,7 +87,7 @@ compareFields :: RowIndex -> IndexedCsv -> IndexedCsv -> [(RowIndex, ColumnIndex
 compareFields index original newfile = compareFieldsHelper index original newfile (header original) []
 
 compareFieldsHelper :: RowIndex -> IndexedCsv -> IndexedCsv -> [ColumnIndex] -> [(RowIndex, ColumnIndex, String, String)] -> [(RowIndex, ColumnIndex, String, String)]
-compareFieldsHelper index original newfile [] results = results
+compareFieldsHelper _ _ _ [] results = results
 compareFieldsHelper index original newfile (headerStr:rest) results =
   if differsMaybeStr (getField original index headerStr) (getField newfile index headerStr)
     then compareFieldsHelper index original newfile rest
@@ -96,27 +96,27 @@ compareFieldsHelper index original newfile (headerStr:rest) results =
 
 differsMaybeStr :: Maybe String -> Maybe String -> Bool
 differsMaybeStr (Just s1) (Just s2) = s1 /= s2
-differsMaybeStr _ _ = False
+differsMaybeStr _ _                 = False
 
 getField :: IndexedCsv -> RowIndex -> String -> Maybe String
-getField IndexedCsv{header = header, entries = entries} rowId columnName = getRowField (Map.lookup rowId entries) (getIndexForHeader header columnName)
+getField IndexedCsv{header = headerS, entries = entriesS} rowId columnName = getRowField (Map.lookup rowId entriesS) (getIndexForHeader headerS columnName)
 
 getRowField :: Maybe [String] -> Maybe Int -> Maybe String
 getRowField (Just str) (Just index) = atMay str index
-getRowField _ _ = Nothing
+getRowField _ _                     = Nothing
 
 getIndexForHeader :: [String] -> String -> Maybe Int
-getIndexForHeader header value = elemIndex value header
+getIndexForHeader headers value = elemIndex value headers
 
 toIndexedCsv :: CSV -> String -> IndexedCsv
-toIndexedCsv csv indexColumn = IndexedCsv {header = fromMaybe [] (headMay csv),
-  entries = csvToMap (getIndexForHeader (fromMaybe [] (headMay csv)) indexColumn) (tailMay csv)}
+toIndexedCsv csvf indexColumn = IndexedCsv {header = fromMaybe [] (headMay csvf),
+  entries = csvToMap (getIndexForHeader (fromMaybe [] (headMay csvf)) indexColumn) (tailMay csvf)}
 
 csvToMap :: Maybe Int -> Maybe [[String]] -> Map.Map String [String]
-csvToMap (Just index) (Just lines) = Map.fromList (filterListMaybes (fmap (\line -> (getRowField (Just line) (Just index) , line)) lines))
+csvToMap (Just index) (Just liness) = Map.fromList (filterListMaybes (fmap (\line -> (getRowField (Just line) (Just index) , line)) liness))
 csvToMap _ _ = Map.empty
 
 filterListMaybes :: [(Maybe a, [a])] -> [(a, [a])]
 filterListMaybes ((Just a, b) : rest) = (a,b) : filterListMaybes rest
-filterListMaybes [] = []
-filterListMaybes (_ : rest) = filterListMaybes rest
+filterListMaybes []                   = []
+filterListMaybes (_ : rest)           = filterListMaybes rest
