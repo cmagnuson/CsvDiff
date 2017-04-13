@@ -1,4 +1,4 @@
-module CsvDiff (diff, toIndexedCsv, Changeset)
+module CsvDiff (diff, toIndexedCsv, Changeset, changesetToString)
 where
 
 import qualified Data.Map.Strict as Map
@@ -11,7 +11,8 @@ data Changeset = Changeset
     {
      adds :: [IndexedRecord],
      deletes :: [IndexedRecord],
-     modifications :: [(RowIndex, ColumnIndex, Row, Row)],
+     -- unique identifier, column name, old value, new value
+     modifications :: [(RowIndex, ColumnIndex, String, String)],
      columnsAdded :: [String],
      columnsDeleted :: [String]
     } deriving (Eq, Show)
@@ -29,10 +30,31 @@ type IndexedRecord = (RowIndex, Row)
 
 -- Original CSV, New CSV, unique identifier column index
 diff :: IndexedCsv -> IndexedCsv -> Changeset
-diff csv1 csv2 = diffChangeset csv1 csv2
+diff = diffChangeset
 
 changesetToString :: Changeset -> String
-changesetToString = show
+changesetToString = ppChangeset
+
+ppChangeset :: Changeset -> String
+ppChangeset changeset = "Adds:\n" ++ ppAdds (adds changeset) ++
+  "Deletes:\n" ++ ppAdds (deletes changeset) ++
+  "Modifications: \n" ++ ppModifications (modifications changeset) ++
+  "Columns Added: " ++ show (columnsAdded changeset) ++ "\n" ++
+  "Columns Deleted: " ++ show (columnsDeleted changeset)
+
+ppAdds :: [IndexedRecord] -> String
+ppAdds recs = "[\n" ++ foldl (\acc rec -> acc ++ "\t" ++ show rec ++ "\n") "" recs ++ "]\n"
+
+ppModifications :: [(RowIndex, ColumnIndex, String, String)] -> String
+ppModifications mods = "[\n" ++ intercalate ",\n" (fmap ppModification (groupBy (\(idx1, _, _, _) (idx2, _, _, _) -> idx1==idx2) mods)) ++ "\n]\n"
+
+-- print all modifications with a matching rowindex
+ppModification :: [(RowIndex, ColumnIndex, String, String)] -> String
+ppModification [] = ""
+ppModification ((idx, colIdx, row1, row2):rst) = "\t(" ++ idx ++ ", " ++ intercalate ", " (fmap ppModValues ((idx,colIdx,row1,row2):rst)) ++ ")"
+
+ppModValues :: (RowIndex, ColumnIndex, String, String) -> String
+ppModValues (_, colIdx, row1, row2) = colIdx ++ ": " ++ show row1 ++ " -> " ++ show row2
 
 diffChangeset :: IndexedCsv -> IndexedCsv -> Changeset
 diffChangeset original newfile =
@@ -56,20 +78,20 @@ findAddedColumns original newfile =  header newfile \\ header original
 findDeletedColumns :: IndexedCsv -> IndexedCsv -> [String]
 findDeletedColumns original newfile = findAddedColumns newfile original
 
-findModifications :: IndexedCsv -> IndexedCsv -> [(RowIndex, ColumnIndex, Row, Row)]
+findModifications :: IndexedCsv -> IndexedCsv -> [(RowIndex, ColumnIndex, String, String)]
 findModifications original newfile = concatMap (\key -> compareFields key original newfile) (Map.keys (entries original))
 
 -- for each entry that is in both maps - check each field - lookup header for given field, check header index in new csv, if exists check if fields match
 
-compareFields :: RowIndex -> IndexedCsv -> IndexedCsv -> [(RowIndex, ColumnIndex, Row, Row)]
+compareFields :: RowIndex -> IndexedCsv -> IndexedCsv -> [(RowIndex, ColumnIndex, String, String)]
 compareFields index original newfile = compareFieldsHelper index original newfile (header original) []
 
-compareFieldsHelper :: RowIndex -> IndexedCsv -> IndexedCsv -> [ColumnIndex] -> [(RowIndex, ColumnIndex, Row, Row)] -> [(RowIndex, ColumnIndex, Row, Row)]
+compareFieldsHelper :: RowIndex -> IndexedCsv -> IndexedCsv -> [ColumnIndex] -> [(RowIndex, ColumnIndex, String, String)] -> [(RowIndex, ColumnIndex, String, String)]
 compareFieldsHelper index original newfile [] results = results
 compareFieldsHelper index original newfile (headerStr:rest) results =
   if differsMaybeStr (getField original index headerStr) (getField newfile index headerStr)
     then compareFieldsHelper index original newfile rest
-      ((index, headerStr, fromMaybe [] (Map.lookup index (entries original)) :: Row, fromMaybe [] (Map.lookup index (entries newfile)) :: Row) : results)
+      ((index, headerStr, fromMaybe "" (getField original index headerStr), fromMaybe "" (getField newfile index headerStr)) : results)
     else compareFieldsHelper index original newfile rest results
 
 differsMaybeStr :: Maybe String -> Maybe String -> Bool
