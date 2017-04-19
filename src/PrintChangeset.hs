@@ -64,7 +64,11 @@ ppHtmlModifications mods = mapM_ ppHtmlModification (groupBy (\(idx1, _, _, _) (
 ppHtmlModification :: [(RowIndex, ColumnIndex, Text, Text)] -> Html ()
 ppHtmlModification mo = do h4_ (toHtml $ printModificationId mo);
                             table_ [class_ "gridtable"]
-                            (mapM_ ppHtmlModificationTableRow mo)
+                            (do thead_ (tr_ (do
+                                              td_ $ b_ "Column"
+                                              td_ $ b_ "Old"
+                                              td_ $ b_ "New"))
+                                tbody_ (mapM_ ppHtmlModificationTableRow mo))
 
 printModificationId :: [(RowIndex, ColumnIndex, Text, Text)] -> Text
 printModificationId ((idx, _, _, _):_) = idx
@@ -104,7 +108,7 @@ makeTable :: [IndexedRecord] -> IndexedCsv -> Html ()
 makeTable recs csv =
   table_ [class_ "gridtable"] (do
     thead_ (
-      tr_ (mapM_ (td_ . toHtml)  (header csv)));
+      tr_ (mapM_ (td_ . b_ . toHtml)  (header csv)));
     mapM_ makeRow recs)
 
 makeRow :: IndexedRecord -> Html ()
