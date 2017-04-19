@@ -17,7 +17,9 @@ data Changeset = Changeset
      -- unique identifier, column name, old value, new value
      modifications  :: [(RowIndex, ColumnIndex, Text, Text)],
      columnsAdded   :: [Text],
-     columnsDeleted :: [Text]
+     columnsDeleted :: [Text],
+     oldFile        :: IndexedCsv,
+     newFile        :: IndexedCsv
     } deriving (Eq, Show)
 
 data IndexedCsv = IndexedCsv
@@ -42,7 +44,9 @@ diffChangeset original newfile =
   deletes = findDeletes original newfile,
   modifications = findModifications original newfile,
   columnsAdded = findAddedColumns original newfile,
-  columnsDeleted = findDeletedColumns original newfile
+  columnsDeleted = findDeletedColumns original newfile,
+  oldFile = original,
+  newFile = newfile
   }
 
 findAdds :: IndexedCsv -> IndexedCsv -> [IndexedRecord]
