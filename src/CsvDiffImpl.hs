@@ -40,13 +40,13 @@ diff = diffChangeset
 diffChangeset :: IndexedCsv -> IndexedCsv -> Changeset
 diffChangeset original newfile =
   Changeset {
-  adds = findAdds original newfile,
-  deletes = findDeletes original newfile,
-  modifications = findModifications original newfile,
-  columnsAdded = findAddedColumns original newfile,
-  columnsDeleted = findDeletedColumns original newfile,
-  oldFile = original,
-  newFile = newfile
+    adds = findAdds original newfile,
+    deletes = findDeletes original newfile,
+    modifications = findModifications original newfile,
+    columnsAdded = findAddedColumns original newfile,
+    columnsDeleted = findDeletedColumns original newfile,
+    oldFile = original,
+    newFile = newfile
   }
 
 findAdds :: IndexedCsv -> IndexedCsv -> [IndexedRecord]
