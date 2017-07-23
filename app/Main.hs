@@ -15,7 +15,3 @@ main = do
   file2 <- parseCSVFromFile file2'
   renderToFile "test.html" $ changesetToHtml (csvdiff file1 file2 indexColumn)
   putStrLn $ changesetToString (csvdiff file1 file2 indexColumn)
-
-csvdiff :: Either ParseError CSV -> Either ParseError CSV -> String -> Changeset
-csvdiff (Right csv1) (Right csv2) indexColumn = diff (toIndexedCsv csv1 indexColumn) (toIndexedCsv csv2 indexColumn)
-csvdiff _ _ _ = error "FIXME: error parsing"

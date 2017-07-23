@@ -4,11 +4,12 @@ module CsvDiffImpl
 where
 
 import           Data.List
-import qualified Data.Map.Strict as Map
+import qualified Data.Map.Strict               as Map
 import           Data.Maybe
-import           Data.Text       (Text, pack)
+import           Data.Text                     (Text, pack)
 import           Safe
 import           Text.CSV
+import           Text.ParserCombinators.Parsec
 
 data Changeset = Changeset
     {
@@ -32,6 +33,11 @@ type RowIndex = Text
 type ColumnIndex = Text
 type Row = [Text]
 type IndexedRecord = (RowIndex, Row)
+
+
+csvdiff :: Either ParseError CSV -> Either ParseError CSV -> String -> Changeset
+csvdiff (Right csv1) (Right csv2) indexColumn = diff (toIndexedCsv csv1 indexColumn) (toIndexedCsv csv2 indexColumn)
+csvdiff _ _ _ = error "FIXME: error parsing"
 
 -- Original CSV, New CSV, unique identifier column index
 diff :: IndexedCsv -> IndexedCsv -> Changeset
