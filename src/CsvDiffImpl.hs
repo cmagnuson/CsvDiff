@@ -9,7 +9,7 @@ import           Data.Maybe
 import           Data.Text                     (Text, pack)
 import           Safe
 import           Text.CSV
-import           Text.ParserCombinators.Parsec
+import           Text.ParserCombinators.Parsec (ParseError)
 
 data Changeset = Changeset
     {
