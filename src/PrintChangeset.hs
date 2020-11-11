@@ -5,13 +5,17 @@ module PrintChangeset
 where
 
 import           CsvDiffImpl
-import           Data.List   (foldl', groupBy)
+import           Data.List      (foldl', groupBy)
 import           Data.Monoid
-import           Data.Text   (Text, intercalate, pack, unpack)
+import           Data.Text      (Text, intercalate, pack, unpack)
+import qualified Data.Text.Lazy as T (unpack)
 import           Lucid
 
 changesetToString :: Changeset -> String
 changesetToString = ppChangeset
+
+changesetToStringHtml :: Changeset -> String
+changesetToStringHtml = T.unpack . renderText . ppChangesetHtml
 
 changesetToHtml :: Changeset -> Html ()
 changesetToHtml = ppChangesetHtml
