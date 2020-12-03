@@ -26,9 +26,12 @@ jobs:
         run: stack test
       - name: Install
         run: stack --local-bin-path . install
-      - name:  Rename
+      - name:  Rename exe
         if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macos')
-        run: mv CsvDiff CsvDiff-${{ matrix.os }}
+        run: mv CsvDiff-exe CsvDiff-exe-${{ matrix.os }}
+      - name:  Rename webapp
+        if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macos')
+        run: mv CsvDiff-webapp CsvDiff-webapp-${{ matrix.os }}
       - name: Display structure of files
         run: ls -R
       - name: Archive Artifact
@@ -36,9 +39,8 @@ jobs:
         with:
           name: CsvDiff-${{ matrix.os }}
           path: |
-            CsvDiff-ubuntu-latest
-            CsvDiff-macos-latest
-            CsvDiff.exe
+            CsvDiff-exe*
+            CsvDiff-webapp*
           
   release:
     name: release
