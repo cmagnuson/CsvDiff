@@ -1,0 +1,63 @@
+on: [push]
+name: CI
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-haskell@v1.1.4
+        with:
+          enable-stack: true
+          stack-version: 'latest'
+          stack-setup-ghc: true
+          stack-no-global: true
+      - uses: actions/cache@v1
+        name: Cache ~/.stack
+        with:
+          path: ~/.stack
+          key: cache-stack
+      - name: Compile
+        run: stack build
+      - name: Test
+        run: stack test
+      - name: Install
+        run: stack --local-bin-path . install
+      - name:  Rename
+        if: contains(matrix.os, 'ubuntu') || contains(matrix.os, 'macos')
+        run: mv CsvDiff CsvDiff-${{ matrix.os }}
+      - name: Display structure of files
+        run: ls -R
+      - name: Archive Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: CsvDiff-${{ matrix.os }}
+          path: |
+            CsvDiff-ubuntu-latest
+            CsvDiff-macos-latest
+            CsvDiff.exe
+          
+  release:
+    name: release
+    needs: [build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Builds
+        uses: actions/download-artifact@v2
+      - name: Display structure of downloaded files
+        run: ls -R
+      - name: Publish release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            CsvDiff-macos-latest/*
+            CsvDiff-ubuntu-latest/*
+            CsvDiff-windows-latest/*
